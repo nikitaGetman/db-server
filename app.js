@@ -1,11 +1,10 @@
-// Require packages and set the port
 const express = require("express");
 const routes = require("./routes/routes");
 const bodyParser = require("body-parser");
 const port = 3002;
 const app = express();
 
-// Use Node.js body parsing middleware
+// middlewares
 app.use(bodyParser.json());
 app.use(
   bodyParser.urlencoded({
@@ -15,7 +14,6 @@ app.use(
 
 routes(app);
 
-// Start the server
 const server = app.listen(port, error => {
   if (error) return console.log(`Error: ${error}`);
 
