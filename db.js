@@ -11,17 +11,20 @@ const cn = {
 const db = pgp(cn); // database instance;
 
 const dbDriver = {
-  createUser(username, password) {
-    return db.none("INSERT INTO users(username, password) VALUES($1,$2)", [
-      username,
-      password
-    ]);
-  },
-  getUser(username, password) {
+  //   createUser(username, password) {
+  //     return db.none("INSERT INTO users(username, password) VALUES($1,$2)", [
+  //       username,
+  //       password
+  //     ]);
+  //   },
+  getUser({ username, password }) {
     return db.one("SELECT * FROM users WHERE username = $1 and password = $2", [
       username,
       password
     ]);
+  },
+  getUserById({ id }) {
+    return db.any("SELECT * FROM users WHERE id = $1", [id]);
   }
 };
 

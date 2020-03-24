@@ -1,8 +1,11 @@
 const express = require("express");
-const routes = require("./routes/routes");
 const bodyParser = require("body-parser");
-const port = 3002;
+const jwt = require("jsonwebtoken");
+const router = require("./routes/routes");
 const app = express();
+
+const port = 3002;
+const { tokenKey } = require("./key");
 
 // middlewares
 app.use(bodyParser.json());
@@ -12,7 +15,7 @@ app.use(
   })
 );
 
-routes(app);
+app.use("/", router);
 
 const server = app.listen(port, error => {
   if (error) return console.log(`Error: ${error}`);
