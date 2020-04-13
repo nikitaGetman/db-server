@@ -5,7 +5,6 @@ const auth = async (req, res, next) => {
   try {
     const token = req.header("Authorization").replace("Bearer ", "");
     const data = await jwt.verify(token, tokenKey);
-
     if (!data || !data.id) {
       throw new Error();
     }

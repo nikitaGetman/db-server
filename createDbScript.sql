@@ -95,3 +95,5 @@ CREATE TABLE public.user_log(
 ALTER TABLE public.user_log ADD CONSTRAINT pkUserLog PRIMARY KEY (id);
 ALTER TABLE public.user_log ADD CONSTRAINT fkUserLogActionId FOREIGN KEY (action_id) REFERENCES public.action_type (id) ON DELETE CASCADE;
 ALTER TABLE public.user_log ADD CONSTRAINT fkUserLogUserId FOREIGN KEY (user_id) REFERENCES public.user (id) ON DELETE CASCADE;
+
+
