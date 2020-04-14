@@ -65,10 +65,11 @@ const dbDriver = {
   },
   getUserServices({ user }) {
     return db.any(
-      `SELECT * FROM public.service
+      `SELECT public.service.id, public.service.title FROM public.service
       JOIN public.service_user_data ON public.service_user_data.service_id = public.service.id
       JOIN public.user_data_map ON public.user_data_map.id = public.service_user_data.user_data_id
-      WHERE public.user_data_map.user_id = $1`,
+      WHERE public.user_data_map.user_id = $1
+	  GROUP BY service.id `,
       [user]
     );
   },
@@ -106,15 +107,17 @@ const dbDriver = {
   async deleteService({ service, user }) {
     const data = await db.any(
       `SELECT * FROM public.service_user_data JOIN public.user_data_map ON public.user_data_map.id = public.service_user_data.user_data_id WHERE public.user_data_map.user_id = $1 and public.service_user_data.service_id = $2;`,
-      [user, service.service_id]
+      [user, service.id]
     );
     if (!data.length) return -1;
 
-    const id = data[0].id;
-    await db.any(
-      `DELETE FROM public.service_user_data WHERE public.service_user_data.user_data_id = $1 and public.service_user_data.service_id = $2;`,
-      [id, service.service_id]
-    );
+    data.forEach(async (d) => {
+      await db.any(
+        `DELETE FROM public.service_user_data WHERE public.service_user_data.user_data_id = $1 and public.service_user_data.service_id = $2;`,
+        [d.id, service.id]
+      );
+    });
+
     return 0;
   },
   getAllDataGroups() {
@@ -127,22 +130,30 @@ const dbDriver = {
     );
   },
   async getServiceUsers({ service }) {
-    const maps = await db.any(
-      `SELECT * FROM public.service_user_data WHERE public.service_user_data.service_id = $1`,
+    const raw_data = await db.any(
+      `SELECT * FROM public.service_user_data
+      JOIN public.user_data_values ON public.user_data_values.user_data_id = public.service_user_data.user_data_id
+      JOIN public.user_data_map ON public.user_data_map.id = public.service_user_data.user_data_id
+      JOIN public.user_data_type ON public.user_data_type.id = public.user_data_values.type_id
+      WHERE public.service_user_data.service_id = $1`,
       [service]
     );
-    const ids = maps.map((m) => m.user_data_id);
 
-    const raw_data = await Promise.all(
-      ids.map(async (id) => {
-        return await db.any(
-          "SELECT public.user_data_type.type_code, public.user_data_values.value FROM public.user_data_values JOIN public.user_data_type ON public.user_data_type.id = public.user_data_values.type_id WHERE user_data_id = $1",
-          [id]
-        );
-      })
-    );
+    let data = {};
 
-    return raw_data;
+    raw_data.forEach((d) => {
+      console.log(d);
+      if (data[d.user_id]) {
+        data[d.user_id] = [
+          ...data[d.user_id],
+          { type_code: d.type_code, value: d.value },
+        ];
+      } else {
+        data[d.user_id] = [{ type_code: d.type_code, value: d.value }];
+      }
+    });
+
+    return data;
   },
   async setServicePermissions({ service, data }) {
     await db.any(
